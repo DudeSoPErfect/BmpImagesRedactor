@@ -1,0 +1,660 @@
+#include <iostream>
+#include <string>
+#include <dirent.h> 
+#include <stdio.h> 
+#include <cmath>
+#include <limits.h>
+
+#include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Vertex.hpp> //распарсить надо
+
+
+std::string cur_dir_path = "./";
+
+void ls_cmd(){
+    DIR *d_strg;
+    struct dirent *dir;
+    d_strg = opendir(cur_dir_path.c_str());
+    if(d_strg){
+        while((dir = readdir(d_strg)) != NULL) {
+            std::cout << dir->d_name << "\n";
+        }
+        closedir(d_strg);
+    }
+    return;
+}
+
+//------------------------------------------------------------
+
+void negative(sf::Image* img){
+    for(uint y = 0; y < img->getSize().y; y++){
+        for(uint x = 0; x < img->getSize().x; x++){
+            sf::Color col = img->getPixel(x, y);
+            col.r = 255 - col.r;
+            col.g = 255 - col.g;
+            col.b = 255 - col.b;
+            img->setPixel(x, y, col);
+            
+        }
+    }
+    return;
+}
+
+//------------------------------------------------------------
+
+void grey(sf::Image* img) {
+    for (uint y = 0; y < img->getSize().y; y++) {
+        for (uint x = 0; x < img->getSize().x; x++) {
+            sf::Color col = img->getPixel(x,y);
+            double average = (col.r + col.g + col.b) / 3;
+            col.r = average;
+            col.g = average;
+            col.b = average;
+            img->setPixel(x, y, col);
+        }
+    }
+    return;
+}
+
+//------------------------------------------------------------
+
+void replace(sf::Image* img, std::string color_from, std::string color_to) {
+    for (uint y = 0; y < img->getSize().y; y++) {
+        for (uint x = 0; x < img->getSize().x; x++) {
+            sf::Color col = img->getPixel(x,y);
+            if (color_from == "red" && color_to == "blue") {
+                col.b = (col.b + col.r) % 255;
+                col.r = 0;
+            } else if (color_from == "red" && color_to == "green") {
+                col.g = (col.g + col.r) % 255;
+                col.r = 0;
+            } else if (color_from == "green" && color_to == "blue") {
+                col.b = (col.b + col.g) % 255;
+                col.g = 0;
+            } else if (color_from == "green" && color_to == "red") {
+                col.r = (col.r + col.g) % 255;
+                col.g = 0;
+            } else if (color_from == "blue" && color_to == "green") {
+                col.g = (col.b + col.g) % 255;
+                col.b = 0;
+            } else if (color_from == "blue" && color_to == "red") {
+                col.r = (col.b + col.r) % 255;
+                col.b = 0;
+            } else {
+                std::cout << "wrong colors\n";
+            }
+            img->setPixel(x, y, col);
+        }
+    }
+    return;
+}
+
+//------------------------------------------------------------
+
+void crop_image(sf::Image* img, uint x, uint y, uint width, uint height){
+
+    sf::Image croped_img;
+    croped_img.create(width, height, sf::Color::Black);
+    for(uint x_cr = x; x_cr < x + width; x_cr++){
+        for(uint y_cr = y; y_cr < y + height; y_cr++){
+            sf::Color col = img->getPixel(x_cr, y_cr);
+            croped_img.setPixel(x_cr - x, y_cr - y, col);
+        }
+    }
+
+    *img = croped_img;
+    return;
+}
+
+
+//------------------------------------------------------------
+
+void compress_img(sf::Image* img, uint width, uint height){
+    double x_scr_ratio = (double)img->getSize().x / (double)width;
+    double y_scr_ratio = (double)img->getSize().y / (double)height;
+    
+    sf::Image compressed_img;
+    compressed_img.create(width, height, sf::Color::Black);
+
+    for(uint x = 0; x < width; x++){
+        for(uint y = 0; y < height; y++){
+            sf::Color col = img->getPixel(x * x_scr_ratio, y * y_scr_ratio);
+            compressed_img.setPixel(x, y, col);
+        }
+    }
+
+    *img = compressed_img;
+    return;
+}
+
+//------------------------------------------------------------
+
+int matr_mul(int** matr_1, int** matr_2) {
+    return 
+    matr_1[0][0] * matr_2[0][0] + 
+    matr_1[0][1] * matr_2[0][1] + 
+    matr_1[0][2] * matr_2[0][2] + 
+    matr_1[1][0] * matr_2[1][0] + 
+    matr_1[1][1] * matr_2[1][1] +
+    matr_1[1][2] * matr_2[1][2] + 
+    matr_1[2][0] * matr_2[2][0] + 
+    matr_1[2][1] * matr_2[2][1] +
+    matr_1[2][2] * matr_2[2][2];     
+}
+
+
+double matr_mul(int** matr_1, double** matr_2) {
+    return  
+    matr_1[0][0] * matr_2[0][0] + 
+    matr_1[0][1] * matr_2[0][1] + 
+    matr_1[0][2] * matr_2[0][2] + 
+    matr_1[1][0] * matr_2[1][0] + 
+    matr_1[1][1] * matr_2[1][1] +
+    matr_1[1][2] * matr_2[1][2] + 
+    matr_1[2][0] * matr_2[2][0] + 
+    matr_1[2][1] * matr_2[2][1] +
+    matr_1[2][2] * matr_2[2][2];     
+}
+
+//----------------------------------------------------------
+
+void fill_mid_image(sf::Image* initial, sf::Image* mid_image) {
+    
+    for (uint y = 0; y < initial->getSize().y + 2; y++) {
+        for (uint x = 0; x < initial->getSize().x + 2; x++) {
+                if (x == 0 && y == 0) {
+                    sf::Color col = initial->getPixel(x,y);
+                    mid_image->setPixel(x, y, col);
+                } else if (x == 0 && y == mid_image->getSize().y - 1) {
+                    sf::Color col = initial->getPixel(x, y-2);
+                    mid_image->setPixel(x, y, col);
+                } else if (x == mid_image->getSize().x - 1 && y == 0)  {
+                    sf::Color col = initial->getPixel(x-2, y);
+                    mid_image->setPixel(x, y, col);
+                } else if (x == 0){
+                    sf::Color col = initial->getPixel(x, y-1);
+                    mid_image->setPixel(x, y, col);
+                } else if (y == 0) {
+                    sf::Color col = initial->getPixel(x-1, y);
+                    mid_image->setPixel(x, y, col);
+                } else if (x == mid_image->getSize().x - 1 && y == mid_image->getSize().y - 1) {
+                    sf::Color col = initial->getPixel(x-2, y-2);
+                    mid_image->setPixel(x, y, col);
+                } else if (x == mid_image->getSize().x - 1) {
+                    sf::Color col = initial->getPixel(x-2, y-1);
+                    mid_image->setPixel(x, y, col);
+                } else if (y == mid_image->getSize().y - 1) {
+                    sf::Color col = initial->getPixel(x-1,y-2);
+                    mid_image->setPixel(x, y, col);
+                } else {
+                    sf::Color col = initial->getPixel(x-1,y-1);
+                    mid_image->setPixel(x, y, col);
+                }
+        }
+    }
+
+}
+    
+
+
+void clarity(sf::Image* img) {
+    sf::Image mid_image;
+    mid_image.create(img->getSize().x + 2, img->getSize().y + 2, sf::Color::Black);
+
+    fill_mid_image(img, &mid_image);
+    //*img = mid_image;
+
+
+
+    uint N = 3;
+    int** coefs = new int*[N];
+    for (uint i = 0; i < N; i++) {
+        coefs[i] = new int[N];
+    }
+
+    coefs[0][0] = -1;
+    coefs[0][1] = -1;
+    coefs[0][2] = -1;
+    coefs[1][0] = -1;
+    coefs[1][1] =  9;
+    coefs[1][2] = -1;
+    coefs[2][0] = -1;
+    coefs[2][1] = -1;
+    coefs[2][2] = -1;
+
+    int** pixels = new int*[N];
+    for (uint i = 0; i < N; i++) {
+        pixels[i] = new int[N]();
+    }
+
+//----------------
+
+    sf::Image fin_image;
+    fin_image.create(img->getSize().x + 2, img->getSize().y + 2, sf::Color::Black);
+
+
+    for (uint y = 1; y < mid_image.getSize().y - 1; y++) {
+        for (uint x = 1; x < mid_image.getSize().x - 1; x++) {
+            sf::Color col = fin_image.getPixel(x,y);
+
+            pixels[0][0] = mid_image.getPixel(x-1,y-1).r;
+            pixels[1][0] = mid_image.getPixel(x-1,y).r;
+            pixels[2][0] = mid_image.getPixel(x-1,y+1).r;
+            pixels[0][1] = mid_image.getPixel(x,y-1).r;
+            pixels[1][1] = mid_image.getPixel(x,y).r;
+            pixels[2][1] = mid_image.getPixel(x,y+1).r;
+            pixels[0][2] = mid_image.getPixel(x+1,y-1).r;
+            pixels[1][2] = mid_image.getPixel(x+1,y).r;
+            pixels[2][2] = mid_image.getPixel(x+1,y+1).r;  
+
+            col.r = matr_mul(pixels, coefs);
+
+            pixels[0][0] = mid_image.getPixel(x-1,y-1).g;
+            pixels[1][0] = mid_image.getPixel(x-1,y).g;
+            pixels[2][0] = mid_image.getPixel(x-1,y+1).g;
+            pixels[0][1] = mid_image.getPixel(x,y-1).g;
+            pixels[1][1] = mid_image.getPixel(x,y).g;
+            pixels[2][1] = mid_image.getPixel(x,y+1).g;
+            pixels[0][2] = mid_image.getPixel(x+1,y-1).g;
+            pixels[1][2] = mid_image.getPixel(x+1,y).g;
+            pixels[2][2] = mid_image.getPixel(x+1,y+1).g;  
+
+            col.g = matr_mul(pixels, coefs);
+
+            pixels[0][0] = mid_image.getPixel(x-1,y-1).b;
+            pixels[1][0] = mid_image.getPixel(x-1,y).b;
+            pixels[2][0] = mid_image.getPixel(x-1,y+1).b;
+            pixels[0][1] = mid_image.getPixel(x,y-1).b;
+            pixels[1][1] = mid_image.getPixel(x,y).b;
+            pixels[2][1] = mid_image.getPixel(x,y+1).b;
+            pixels[0][2] = mid_image.getPixel(x+1,y-1).b;
+            pixels[1][2] = mid_image.getPixel(x+1,y).b;
+            pixels[2][2] = mid_image.getPixel(x+1,y+1).b;  
+
+            col.b = matr_mul(pixels, coefs);
+
+            fin_image.setPixel(x, y, col);
+        }
+    }
+    *img = fin_image;
+    crop_image(img, 1, 1, img->getSize().x - 2, img->getSize().y - 2);
+    return; 
+}
+
+//-----------------------
+
+
+void borders(sf::Image* img) {
+
+    sf::Image mid_image;
+    mid_image.create(img->getSize().x + 2, img->getSize().y + 2, sf::Color::Black);
+
+    fill_mid_image(img, &mid_image);
+    
+    //*img = mid_image;
+//-------------
+
+    uint N = 3;
+    int** G_x = new int*[N];
+    for (uint i = 0; i < N; i++) {
+        G_x[i] = new int[N];
+    }
+
+    G_x[0][0] = -1;
+    G_x[0][1] = -2;
+    G_x[0][2] = -1;
+    G_x[1][0] = 0;
+    G_x[1][1] = 0;
+    G_x[1][2] = 0;
+    G_x[2][0] = 1;
+    G_x[2][1] = 2;
+    G_x[2][2] = 1;
+
+    
+
+    int** G_y = new int*[N];
+    for (uint i = 0; i < N; i++) {
+        G_y[i] = new int[N];
+    }
+
+    G_y[0][0] = -1;
+    G_y[0][1] = 0;
+    G_y[0][2] = -2;
+    G_y[1][0] = 0;
+    G_y[1][1] = 2;
+    G_y[1][2] = 0;
+    G_y[2][0] = -1;
+    G_y[2][1] = 0;
+    G_y[2][2] = 1;
+
+
+
+
+    int** pixels = new int*[N];
+    for (uint i = 0; i < N; i++) {
+        pixels[i] = new int[N]();
+    }
+
+
+    sf::Image fin_image;
+    fin_image.create(img->getSize().x + 2, img->getSize().y + 2, sf::Color::Black);
+
+    int div_coef = 4;
+
+    for (uint y = 1; y < mid_image.getSize().y - 1; y++) {
+        for (uint x = 1; x < mid_image.getSize().x - 1; x++) {
+            sf::Color col_1 = fin_image.getPixel(x,y);
+            sf::Color col_2 = fin_image.getPixel(x,y);
+
+            pixels[0][0] = mid_image.getPixel(x-1,y-1).r;
+            pixels[1][0] = mid_image.getPixel(x-1,y).r;
+            pixels[2][0] = mid_image.getPixel(x-1,y+1).r;
+            pixels[0][1] = mid_image.getPixel(x,y-1).r;
+            pixels[1][1] = mid_image.getPixel(x,y).r;
+            pixels[2][1] = mid_image.getPixel(x,y+1).r;
+            pixels[0][2] = mid_image.getPixel(x+1,y-1).r;
+            pixels[1][2] = mid_image.getPixel(x+1,y).r;
+            pixels[2][2] = mid_image.getPixel(x+1,y+1).r;  
+
+            col_1.r = matr_mul(G_x, pixels);
+            col_2.r = matr_mul(G_y, pixels);
+
+            pixels[0][0] = mid_image.getPixel(x-1,y-1).g;
+            pixels[1][0] = mid_image.getPixel(x-1,y).g;
+            pixels[2][0] = mid_image.getPixel(x-1,y+1).g;
+            pixels[0][1] = mid_image.getPixel(x,y-1).g;
+            pixels[1][1] = mid_image.getPixel(x,y).g;
+            pixels[2][1] = mid_image.getPixel(x,y+1).g;
+            pixels[0][2] = mid_image.getPixel(x+1,y-1).g;
+            pixels[1][2] = mid_image.getPixel(x+1,y).g;
+            pixels[2][2] = mid_image.getPixel(x+1,y+1).g;  
+
+            col_1.g = matr_mul(G_x, pixels);
+            col_2.g = matr_mul(G_y, pixels);
+
+            pixels[0][0] = mid_image.getPixel(x-1,y-1).b;
+            pixels[1][0] = mid_image.getPixel(x-1,y).b;
+            pixels[2][0] = mid_image.getPixel(x-1,y+1).b;
+            pixels[0][1] = mid_image.getPixel(x,y-1).b;
+            pixels[1][1] = mid_image.getPixel(x,y).b;
+            pixels[2][1] = mid_image.getPixel(x,y+1).b;
+            pixels[0][2] = mid_image.getPixel(x+1,y-1).b;
+            pixels[1][2] = mid_image.getPixel(x+1,y).b;
+            pixels[2][2] = mid_image.getPixel(x+1,y+1).b;  
+
+            col_1.b = matr_mul(G_x, pixels);
+            col_2.b = matr_mul(G_y, pixels);
+
+            col_1.b = sqrt(col_1.b * col_1.b + col_2.b * col_2.b) / div_coef;
+            col_1.r = sqrt(col_1.r * col_1.r + col_2.r * col_2.r) / div_coef;
+            col_1.g = sqrt(col_1.g * col_1.g + col_2.g * col_2.g) / div_coef;
+
+            fin_image.setPixel(x, y, col_1);
+        }
+    }
+    *img = fin_image;
+    crop_image(img, 1, 1, img->getSize().x - 2, img->getSize().y - 2);
+
+    return;
+}
+
+//------------------------
+
+double gauss_func(int x, int y, double sigma_coef) {
+    const double pi = 3.1415;
+
+    return (1/(2 * pi * sigma_coef*sigma_coef)) * exp(-(x*x + y*y)/(2*sigma_coef*sigma_coef)); 
+}
+
+void blur_gauss(sf::Image* img) {
+
+    sf::Image mid_image;
+    mid_image.create(img->getSize().x + 2, img->getSize().y + 2, sf::Color::Black);
+
+    fill_mid_image(img, &mid_image);
+
+    uint N = 3;
+    double** matr = new double*[N];
+    for (uint i = 0; i < N; i++) {
+        matr[i] = new double[N];
+    }
+    
+    matr[0][0] = gauss_func(-1, 1, 1.5);
+    matr[0][1] = gauss_func(0, 1, 1.5);
+    matr[0][2] = gauss_func(1, 1, 1.5);
+    matr[1][0] = gauss_func(-1, 0, 1.5);
+    matr[1][1] = gauss_func(0, 0, 1.5);
+    matr[1][2] = gauss_func(1, 0, 1.5);
+    matr[2][0] = gauss_func(-1, -1, 1.5);
+    matr[2][1] = gauss_func(0, -1, 1.5);
+    matr[2][2] = gauss_func(1, -1, 1.5);
+
+    double local_sum = 0;
+    for (size_t i = 0; i < N; i++) {
+        for (size_t j = 0; j < N; j++) {
+            local_sum += matr[i][j];
+        }
+    }
+
+    for (size_t i = 0; i < N; i++) {
+        for (size_t j = 0; j < N; j++) {
+            matr[i][j] /= local_sum;
+        }
+    }
+    //std::cout << matr[1][1];
+
+
+
+
+        int** pixels = new int*[N];
+    for (uint i = 0; i < N; i++) {
+        pixels[i] = new int[N]();
+    }
+
+    sf::Image fin_image;
+    fin_image.create(img->getSize().x + 2, img->getSize().y + 2, sf::Color::Black);
+
+
+    for (uint y = 1; y < mid_image.getSize().y - 1; y++) {
+        for (uint x = 1; x < mid_image.getSize().x - 1; x++) {
+            sf::Color col = fin_image.getPixel(x,y);
+
+            pixels[0][0] = mid_image.getPixel(x-1,y-1).r;
+            pixels[1][0] = mid_image.getPixel(x-1,y).r;
+            pixels[2][0] = mid_image.getPixel(x-1,y+1).r;
+            pixels[0][1] = mid_image.getPixel(x,y-1).r;
+            pixels[1][1] = mid_image.getPixel(x,y).r;
+            pixels[2][1] = mid_image.getPixel(x,y+1).r;
+            pixels[0][2] = mid_image.getPixel(x+1,y-1).r;
+            pixels[1][2] = mid_image.getPixel(x+1,y).r;
+            pixels[2][2] = mid_image.getPixel(x+1,y+1).r;  
+
+            col.r = matr_mul(pixels, matr);
+
+            pixels[0][0] = mid_image.getPixel(x-1,y-1).g;
+            pixels[1][0] = mid_image.getPixel(x-1,y).g;
+            pixels[2][0] = mid_image.getPixel(x-1,y+1).g;
+            pixels[0][1] = mid_image.getPixel(x,y-1).g;
+            pixels[1][1] = mid_image.getPixel(x,y).g;
+            pixels[2][1] = mid_image.getPixel(x,y+1).g;
+            pixels[0][2] = mid_image.getPixel(x+1,y-1).g;
+            pixels[1][2] = mid_image.getPixel(x+1,y).g;
+            pixels[2][2] = mid_image.getPixel(x+1,y+1).g;  
+
+            col.g = matr_mul(pixels, matr);
+
+            pixels[0][0] = mid_image.getPixel(x-1,y-1).b;
+            pixels[1][0] = mid_image.getPixel(x-1,y).b;
+            pixels[2][0] = mid_image.getPixel(x-1,y+1).b;
+            pixels[0][1] = mid_image.getPixel(x,y-1).b;
+            pixels[1][1] = mid_image.getPixel(x,y).b;
+            pixels[2][1] = mid_image.getPixel(x,y+1).b;
+            pixels[0][2] = mid_image.getPixel(x+1,y-1).b;
+            pixels[1][2] = mid_image.getPixel(x+1,y).b;
+            pixels[2][2] = mid_image.getPixel(x+1,y+1).b;  
+
+            col.b = matr_mul(pixels, matr);
+
+            fin_image.setPixel(x, y, col);
+        }
+    }
+    *img = fin_image;
+    crop_image(img, 1, 1, img->getSize().x - 2, img->getSize().y - 2);
+
+    return;
+}
+
+//----------------------
+
+void vignette(sf::Image* img) {
+
+    int rows = img->getSize().y;
+    int columns = img->getSize().x;
+    double** coefs = new double*[rows];
+    for (uint i = 0; i < rows; i++) {
+        coefs[i] = new double[columns];
+    }
+
+    
+    int y_coef = 0 - rows / 2;
+
+    std::cout << gauss_func(-100, 1, 600) << " " << y_coef << "\n";
+    for (size_t y = 0; y < rows; y++) {
+        int x_coef = 0 - columns / 2;
+        for (size_t x = 0; x < columns; x++) {
+            coefs[x][y] = gauss_func(x_coef, y_coef, 100);
+            //std::cout << x_coef << " " << y_coef << "\n";
+            std::cout << coefs[x][y] << "\n";
+            ++x_coef;
+        }
+        ++y_coef;
+    }
+    //
+    
+    double maximum = SHRT_MIN;
+
+    std::cout << maximum;
+    for (size_t y = 0; y < rows; y++) {
+        for (size_t x = 0; x < columns; x++) {
+            maximum = maximum > coefs[x][y] ? maximum : coefs[x][y];
+        }
+    }
+
+    std::cout << maximum;
+   
+    for (size_t y = 0; y < rows; y++) {
+        for (size_t x = 0; x < columns; x++) {
+            coefs[x][y] /= maximum; 
+        }
+    }
+
+ 
+    sf::Image fin_image;
+    fin_image.create(img->getSize().x, img->getSize().y, sf::Color::Black);
+
+
+    for (size_t y = 0; y < rows; y++) {
+        for (size_t x = 0; x < columns; x++) {
+            sf::Color col = img->getPixel(x,y);
+            col.r *= coefs[x][y];
+            col.g *= coefs[x][y];
+            col.b *= coefs[x][y];
+            fin_image.setPixel(x, y, col);
+        }
+    }
+
+    *img = fin_image;
+    return;
+}
+
+
+
+
+
+
+
+
+//-----------------------
+
+int main(){
+
+    sf::Image cur_image;
+
+    std::string cur_cmd = "";
+    while(std::cin >> cur_cmd){
+        if(cur_cmd == "ls"){
+            printf("-------\n");
+            ls_cmd();
+            printf("-------\n");
+        } else if(cur_cmd == "path"){
+            std::cout << cur_dir_path << "\n";
+        } else if(cur_cmd == "cd"){
+            std::string path = "";
+            std::cin >> path;
+            if(path == ".."){
+                while(cur_dir_path.size() > 0 && cur_dir_path[cur_dir_path.size() - 1] != '/'){
+                    cur_dir_path.pop_back();
+                }
+                if(cur_dir_path.size() > 0) cur_dir_path.pop_back();
+            }
+            else{
+                cur_dir_path += path + "/";
+            }
+        } else if(cur_cmd == "redact"){
+            std::string file_name = ""; std::cin >> file_name;
+            std::string flag = ""; std::cin >> flag;
+
+            if(!cur_image.loadFromFile(cur_dir_path + file_name)){
+                std::cout << "unable to open file\n";
+            }
+            else{
+                if(flag == "--neg"){
+                    negative(&cur_image);
+                    printf("Done!\n");
+                } else if(flag == "--crop"){
+                    std::string x_str, y_str, w_str, h_str;
+                    std::cin >> x_str >> y_str >> w_str >> h_str;
+
+                    crop_image(&cur_image, std::stoi(x_str), std::stoi(y_str), std::stoi(w_str), std::stoi(h_str));
+                    printf("Done!\n");
+                } else if(flag == "--compress"){
+                    std::string w_str, h_str;
+                    std::cin >> w_str >> h_str;
+
+                    compress_img(&cur_image, std::stoi(w_str), std::stoi(h_str)); //string to int
+                    printf("Done!\n");
+                } else if (flag == "--grey") {
+                    grey(&cur_image);
+                    printf("Done!\n");
+                } else if (flag == "--replace_color") {
+                    std::string from, to;
+                    std::cin >> from >> to;
+                    replace(&cur_image, from, to);
+                    printf("Done\n");
+                } else if (flag == "--clarity") {
+                    clarity(&cur_image);
+                    printf("Done\n");
+                } else if (flag == "--borders") {
+                    borders(&cur_image);
+                    printf("Done\n");
+                } else if (flag == "--gauss") {
+                    blur_gauss(&cur_image);
+                    printf("Done\n");
+                } else if (flag == "--vignette") {
+                    vignette(&cur_image);
+                    printf("Done\n");
+                }
+                if(!cur_image.saveToFile(cur_dir_path + "New_" + file_name)){
+                    std::cout << "unable to save file\n";
+                }
+            }
+        } else if (cur_cmd == "end") {
+            break;
+        } else{
+            std::cout << "unrecognized cmd\n";
+        }
+        std::cout << "\n";
+    }
+
+    return 0;
+}
