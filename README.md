@@ -1,4 +1,4 @@
-# bmp_images_redactor
+# bmpImagesRedactor
 
 ### The essence of the program
 The program allows you to apply apply to images.bmp format the following filters:
