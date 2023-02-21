@@ -1,46 +1,46 @@
 # bmp_images_redactor
 
-### Суть программы
-Программа позволяет применять применять к изображениям .bmp формата следующие фильтры:
-* **negative** - инвертирование цвета.
-* **replace_color from to** - замена одного rgb-цвета на другой.
-* **улучшение четкости** - одноименный матричный фильтр.
-* **размытие Гаусса** - одноименный матричный фильтр.
-* **grey** - делает изображение серым.
-* **выделение границ** - одноименный матричный фильтр.
-* **виньетка** - затемнение края по кругу с плавным переходом, матричный фильтр.
-* **crop** - обрезает файл по заданному прямоугольнику.
-* **resize** - сжимает картинку до заданного размера.
+### The essence of the program
+The program allows you to apply apply to images.bmp format the following filters:
+* **negative** - inverting the color.
+* **replace_color from to** - replacing one rgb color with another.
+* **improved clarity** - the matrix filter of the same name.
+* **Gaussian blur** is a matrix filter of the same name.
+* **grey** - makes the image gray.
+* **border selection** is a matrix filter of the same name.
+* **vignette** - darkening of the edge in a circle with a smooth transition, matrix filter.
+* **crop** - crop the file to the specified rectangle.
+* **resize** - compresses the image to the specified size.
 
-Программа позволяет итерироваться по директориям и выбирать сразу несколько файлов для применения фильтров, работает реализация команд ls и cd. 
-Реализован просмотр уже выбранных файлов, их сохранение и выбор названий. Для этого предусмотрены соответствующие папки, но юзер может выбирать их произвольным образом.
-Предусмотрена команда --help и обработка ошибок.
+The program allows you to iterate through directories and select several files at once to apply filters, the implementation of ls and cd commands works. 
+The viewing of already selected files, their saving and the choice of names is implemented. For this purpose, appropriate folders are provided, but the user can choose them in any way.
+The --help command and error handling are provided.
 
-### Описание файлов
-* **main.cpp** -  Главный файл программы.
-Вызывает функции из остальных файлов.
-* **filters.cpp** -  Вспомогательный файл программы.
-Содержит реализацию фильтров.
-* **filters.hpp** -  Заголовочный файл программы.
-Содержит заголовки для файла "filters.cpp"
-* **handle_commands.cpp** -  Вспомогательный файл программы.
-Содержит обработку всех команд, которые пользователь отправляет программе
-* **handle_commands.hpp** -  Заголовочный файл программы.
-Содержит заголовки для файла "handle_commands.cpp"
-* **help.cpp** -  Вспомогательный файл программы.
-Содержит реализацию команды --help.
-* **help.hpp** -  Заголовочный файл программы.
-Содержит заголовки для файла "help.hpp
-* **structs.hpp** -  Заголовочный файл программы.
-Содержит структуры для работы программы.
-* **fillPixelsUsingMidImage.hpp** -  Заголовочный файл программы.
-Содержит шаблонную информацию для заполнения матрицы матричного фильтра.
+### File Description
+* **main.cpp ** - The main program file.
+Calls functions from other files.
+* **filters.cpp ** - Auxiliary program file.
+Contains an implementation of filters.
+* **filters.hpp** - The header file of the program.
+Contains headers for the file "filters.cpp "
+* **handle_commands.cpp ** - Auxiliary program file.
+Contains processing of all commands that the user sends to the program
+* **handle_commands.hpp** - The header file of the program.
+Contains headers for the file "handle_commands.cpp "
+* **help.cpp ** - Auxiliary program file.
+Contains an implementation of the --help command.
+* **help.hpp** is the header file of the program.
+Contains headers for the file "help.hpp
+* **structures.hpp** - The header file of the program.
+Contains structures for the operation of the program.
+* **fillPixelsUsingMidImage.hpp** - The header file of the program.
+Contains template information for filling in the matrix of the matrix filter.
 
-### Как запустить
-1. Загрузить все проектные файлы в одну директорию.
-2. Установить компилятор g++ и добавить его в переменную среду PATH.
-3. Перейти в директорию файлов.
-4. Запустить приложение "cmd.exe" в текущей директории.
-5. В "cmd.exe" запустить команду "make"
-6. В папке in находятся шаблонные изображения для редактирования
-7. Наслаждаться
+### How to launch
+1. Upload all project files to one directory.
+2. Install the g++ compiler and add it to the PATH environment variable.
+3. Go to the files directory.
+4. Launch the application "cmd.exe " in the current directory.
+5. In "cmd.exe " run the "make" command
+6. The in folder contains template images for editing
+7. Enjoy
