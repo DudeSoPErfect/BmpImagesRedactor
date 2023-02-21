@@ -17,17 +17,17 @@ The viewing of already selected files, their saving and the choice of names is i
 The --help command and error handling are provided.
 
 ### File Description
-* **main.cpp ** - The main program file.
+* **main.cpp** - The main program file.
 Calls functions from other files.
-* **filters.cpp ** - Auxiliary program file.
+* **filters.cpp** - Auxiliary program file.
 Contains an implementation of filters.
 * **filters.hpp** - The header file of the program.
-Contains headers for the file "filters.cpp "
-* **handle_commands.cpp ** - Auxiliary program file.
+Contains headers for the file "filters.cpp"
+* **handle_commands.cpp** - Auxiliary program file.
 Contains processing of all commands that the user sends to the program
 * **handle_commands.hpp** - The header file of the program.
-Contains headers for the file "handle_commands.cpp "
-* **help.cpp ** - Auxiliary program file.
+Contains headers for the file "handle_commands.cpp"
+* **help.cpp** - Auxiliary program file.
 Contains an implementation of the --help command.
 * **help.hpp** is the header file of the program.
 Contains headers for the file "help.hpp
